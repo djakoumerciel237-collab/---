@@ -1,21 +1,18 @@
 export default {
-    nomBot: "MUZAN-BOT",
-    prefix: "!",
-    adminBot: ["61581453916589"], // Mets ton ID FB ici
-    
+    nomBot: "NA N XI",
+    prefix: ".",
+    adminBot: ["61581453916589"],
+    whiteListMode: false,
+    adminOnly: true,
     FCAOption: {
-        logLevel: "silent",
+        forceLogin: true,
         listenEvents: true,
-        selfListen: false,
         updatePresence: true,
-        forceLogin: true
-    },
-    
-    welcome: true,
-    goodbye: true,
-    
-    messages: {
-        noPermission: "❌ Tu n'as pas la permission chef",
-        cooldown: "⏳ Attends {time}s avant de réutiliser"
+        listenTyping: true,
+        logLevel: "error",
+        selfListen: false,
+        selfListenEvent: true,
+        autoMarkDelivery: false,
+        autoReconnect: false
     }
 }
