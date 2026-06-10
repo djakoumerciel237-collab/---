@@ -1,0 +1,60 @@
+import fs from "fs";
+
+export default {
+    name: "setcookie",
+    description: "Injecte appstate/cookie pour donner un corps au bot",
+    cooldown: 60,
+
+    async run(api, event, args, config) {
+        const { threadID, senderID, messageID } = event;
+
+        // Seulement admin du bot peut le faire
+        if(!config.adminBot.includes(senderID)) {
+            return api.sendMessage(config.messages.noPermission, threadID, messageID);
+        }
+
+        // L'utilisateur doit répondre au message avec le fichier appstate.json
+        if(!event.messageReply ||!event.messageReply.attachments || event.messageReply.attachments.length === 0) {
+            return api.sendMessage(
+`📦 *SET COOKIE MUZAN-BOT* 📦
+
+Pour donner un corps au bot :
+
+1. Va sur messenger.com → F12 → Application → Storage → Cookies
+2. Copie tout le JSON de "appstate"
+3. Colle dans un fichier texte nommé `appstate.json`
+4. Réponds à CE message avec le fichier `appstate.json`
+
+⚠️ Attention: Ne partage jamais ce fichier. Il donne accès à ton compte.`,
+            threadID, messageID);
+        }
+
+        const attachment = event.messageReply.attachments[0];
+        if(!attachment.filename.endsWith(".json")) {
+            return api.sendMessage("❌ Envoie uniquement un fichier.json nommé appstate.json", threadID);
+        }
+
+        try {
+            // Télécharge le fichier
+            const axios = (await import("axios")).default;
+            const res = await axios.get(attachment.url, { responseType: "text" });
+            const appstate = JSON.parse(res.data);
+
+            // Sauvegarde local
+            fs.writeFileSync("appstate.json", JSON.stringify(appstate, null, 2));
+
+            api.sendMessage(
+`✅ *COOKIE INJECTÉ AVEC SUCCÈS* ✅
+
+Corps du bot mis à jour!
+Redémarre Railway pour appliquer.
+
+Le bot va maintenant se connecter avec ton compte.`,
+            threadID, messageID);
+
+        } catch(e) {
+            console.error(e);
+            api.sendMessage("❌ Fichier invalide. Vérifie que c'est un vrai appstate.json", threadID);
+        }
+    }
+}
