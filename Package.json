@@ -1,0 +1,16 @@
+{
+  "name": "muzan-bot",
+  "version": "2.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "fca-unofficial": "^1.1.5",
+    "axios": "^1.6.0",
+    "canvas": "^2.11.2",
+    "jimp": "^0.22.10",
+    "google-tts-api": "^2.0.2",
+    "moment-timezone": "^0.5.43"
+  }
+}
