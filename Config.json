@@ -5,8 +5,8 @@ module.exports = {
     "prefix": "!",
     
     // === ADMIN & ACCES ===
-    "adminBot": ["1000123456789"], // Mets ton ID FB ici
-    "autoReactAdminOnly": true, // autoract seulement admin du bot
+    "adminBot": ["61581453916589"], // Mets ton ID FB ici
+    "autoReactAdminOnly": 💀☠👻😽, // autoract seulement admin du bot
     
     // === MODULES AUTO ===
     "welcome": true, // message bienvenue
