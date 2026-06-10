@@ -44,10 +44,14 @@ login({appState: JSON.parse(process.env.APPSTATE)}, (err, api) => {
             if(cmd) cmd.run(api, event, config);
         }
         
-        // 4. ANTI-LINK - Supprime les liens
-        if(event.type == "message" && config.antiLink && event.body) {
-            const cmd = cmds.get("antilink");
-            if(cmd) cmd.run(api, event, config);
+        // 4. ANTI-LINK - import { antiLink, antiSpam, antiPromote, ProtectionManager } from "./utils/protections.js";
+const protectionManager = new ProtectionManager(config.adminBot[0]);
+
+// Dans api.listen :
+antiLink(api, event, protectionManager, config);
+antiSpam(api, event, protectionManager, config);
+autoReact(api, event, config);
+antiPromote(api, event, protectionManager);
         }
         
         // 5. AUTOREACT ADMIN SEULEMENT
