@@ -1,0 +1,94 @@
+import login from "fca-unofficial";
+import fs from "fs";
+import path from "path";
+import chalk from "chalk";
+import config from "./config.js";
+
+const cmds = new Map();
+const cooldowns = new Map();
+
+// Auto-load toutes les cmds dans /cmds/
+const cmdFiles = fs.readdirSync("./cmds").filter(file => file.endsWith(".js"));
+for(const file of cmdFiles) {
+    const cmd = await import(`./cmds/${file}`);
+    cmds.set(cmd.default.name, cmd.default);
+    console.log(chalk.green(`[LOAD] Commande ${cmd.default.name} chargée`));
+}
+
+console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
+
+login({appState: JSON.parse(process.env.APPSTATE)}, (err, api) => {
+    if(err) return console.error(chalk.red("Erreur login:", err));
+    
+    api.setOptions(config.FCAOption);
+    console.log(chalk.green(`✅ ${config.nomBot} connecté !`));
+
+    api.listen(async (err, event) => {
+        if(err) return;
+        
+        // 1. WELCOME - Quand quelqu'un rejoint
+        if(event.logMessageType == "log:subscribe" && config.welcome) {
+            const cmd = cmds.get("welcome");
+            if(cmd) cmd.run(api, event, config);
+        }
+        
+        // 2. GOODBYE - Quand quelqu'un quitte
+        if(event.logMessageType == "log:unsubscribe" && config.goodbye) {
+            const cmd = cmds.get("goodbye");
+            if(cmd) cmd.run(api, event, config);
+        }
+        
+        // 3. LOCKNICK - Anti changement pseudo
+        if(event.logMessageType == "log:user-nickname" && config.lockNick) {
+            const cmd = cmds.get("locknick");
+            if(cmd) cmd.run(api, event, config);
+        }
+        
+        // 4. ANTI-LINK - Supprime les liens
+        if(event.type == "message" && config.antiLink && event.body) {
+            const cmd = cmds.get("antilink");
+            if(cmd) cmd.run(api, event, config);
+        }
+        
+        // 5. AUTOREACT ADMIN SEULEMENT
+        if(event.type == "message" && config.autoReactAdminOnly && config.adminBot.includes(event.senderID)) {
+            if(config.autoReact) {
+                const cmd = cmds.get("autoreact");
+                if(cmd) cmd.run(api, event, config);
+            }
+            if(config.autoReact2) {
+                const cmd = cmds.get("autoreact2");
+                if(cmd) cmd.run(api, event, config);
+            }
+        }
+        
+        // 6. COMMANDES AVEC PREFIX
+        if(event.type == "message" && event.body && event.body.startsWith(config.prefix)) {
+            const args = event.body.slice(config.prefix.length).trim().split(/ +/);
+            const cmdName = args.shift().toLowerCase();
+            
+            const cmd = cmds.get(cmdName);
+            if(!cmd) return;
+            
+            // Cooldown
+            if(!cooldowns.has(cmd.name)) cooldowns.set(cmd.name, new Map());
+            const now = Date.now();
+            const timestamps = cooldowns.get(cmd.name);
+            const cooldownAmount = (cmd.cooldown || 3) * 1000;
+            
+            if(timestamps.has(event.senderID)) {
+                const expirationTime = timestamps.get(event.senderID) + cooldownAmount;
+                if(now < expirationTime) return;
+            }
+            timestamps.set(event.senderID, now);
+            setTimeout(() => timestamps.delete(event.senderID), cooldownAmount);
+            
+            try {
+                await cmd.run(api, event, args, config);
+            } catch(e) {
+                console.error(e);
+                api.sendMessage("Erreur dans la commande ❌", event.threadID);
+            }
+        }
+    });
+});
