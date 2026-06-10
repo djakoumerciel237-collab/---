@@ -1,0 +1,55 @@
+import gTTS from "node-gtts";
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+
+const tts = gTTS("fr");
+const tempDir = "./temp";
+if(!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+const cooldownMap = new Map();
+const userCooldown = 8000;
+
+export default {
+    name: "knuta",
+    description: "IA + TTS automatique",
+    cooldown: 8,
+
+    async run(api, event, args, config) {
+        const { threadID, messageID, senderID, body } = event;
+        const text = args.join(" ");
+
+        if(!text || text.length < 3) return api.sendMessage("Tape: !knuta ton texte", threadID);
+
+        const cooldownKey = `${threadID}:${senderID}`;
+        const now = Date.now();
+        if(cooldownMap.has(cooldownKey) && now - cooldownMap.get(cooldownKey) < userCooldown) {
+            return api.sendMessage("Attends 8s entre chaque TTS chef ⏳", threadID);
+        }
+        cooldownMap.set(cooldownKey, now);
+
+        try {
+            // IA Gemini comme Knut
+            const apiUrl = `https://api.giftedtech.co.ke/api/ai/gemini?apikey=gifted&q=${encodeURIComponent(text)}`;
+            const { data } = await axios.get(apiUrl, { timeout: 15000 });
+            const responseText = (data.result || data.response || data.message).trim();
+
+            const audioPath = path.join(tempDir, `knuta_${Date.now()}.mp3`);
+            
+            await new Promise((resolve, reject) => {
+                tts.save(audioPath, responseText, (err) => err ? reject(err) : resolve());
+            });
+
+            api.sendMessage({
+                body: `🎙️ *MUZAN-IA* répond:`,
+                attachment: fs.createReadStream(audioPath)
+            }, threadID, () => {
+                if(fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+            }, messageID);
+
+        } catch(error) {
+            console.error(error);
+            api.sendMessage("Erreur IA/TTS ❌", threadID);
+        }
+    }
+}
