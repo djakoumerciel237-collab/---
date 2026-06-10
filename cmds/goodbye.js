@@ -1,61 +1,9 @@
-import { getRandomImage, REACTIONS } from "../utils/protections.js";
-
 export default {
     name: "goodbye",
-    description: "Message au revoir avec image",
-
-    async run(api, event, config) {
-        if(!config.goodbye) return;
-        const { threadID, logMessageData, author } = event;
-        const leftID = logMessageData.leftParticipantFbId;
-
-        if(leftID == api.getCurrentUserID()) return;
-
-        const groupInfo = await api.getThreadInfo(threadID);
-        const groupName = groupInfo.name;
-        const memberCount = groupInfo.participantIDs.length;
-        const userInfo = await api.getUserInfo(leftID);
-        const name = userInfo[leftID].name;
-        const randomImg = getRandomImage();
-
-        const wasKicked = author && author != leftID;
-        const actorNum = wasKicked ? author : null;
-
-        let caption;
-        if(wasKicked) {
-            caption = 
-`┏━━━『 💀 MUZAN-BOT 』━━━┓
-┃ 👤 @${leftID}
-┃ ❌ Expulsé du groupe !
-┃ ⚡ Par : @${actorNum}
-┃ 👥 Membres restants : ${memberCount}
-┗━━━━━━━━━━━━━━┛`;
-        } else {
-            caption = 
-`┏━━━『 💀 MUZAN-BOT 』━━━┓
-┃ 👤 @${leftID}
-┃ ❌ A quitté le groupe
-┃ 👥 Membres restants : ${memberCount}
-┃ 📌 C'est toi qui perd !!!!
-┗━━━━━━━━━━━━━━┛`;
+    run: async (api, event, args, config) => {
+        if(event.logMessageType === "log:unsubscribe") {
+            const name = event.logMessageData.leftParticipantName || "Quelqu'un";
+            api.sendMessage(`Bye ${name} 👋`, event.threadID);
         }
-
-        const mentions = wasKicked 
-            ? [{ tag: name, id: leftID }, { tag: "admin", id: actorNum }]
-            : [{ tag: name, id: leftID }];
-
-        api.sendMessage({
-            body: caption,
-            attachment: await streamURL(randomImg),
-            mentions: mentions
-        }, threadID);
-
-        api.setMessageReaction(REACTIONS.goodbye, event.messageID, () => {}, true);
     }
 }
-
-async function streamURL(url) {
-    const axios = (await import("axios")).default;
-    const res = await axios.get(url, { responseType: "stream" });
-    return res.data;
-              }
