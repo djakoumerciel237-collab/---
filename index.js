@@ -16,7 +16,23 @@ async function loadCmds() {
     console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
 }
 
-await loadCmds();
+async function loadCmds() {
+    const cmdFiles = fs.readdirSync("./cmds").filter(file => file.endsWith(".js"));
+    for(const file of cmdFiles) {
+        try {
+            const cmd = await import(`./cmds/${file}`);
+            if(cmd.default && cmd.default.name) {
+                cmds.set(cmd.default.name, cmd.default);
+                console.log(chalk.green(`Commande ${cmd.default.name} chargée`));
+            } else {
+                console.log(chalk.red(`Cmd ${file} invalide, ignorée`));
+            }
+        } catch(e) {
+            console.log(chalk.red(`Erreur chargement ${file}: ${e.message}`));
+        }
+    }
+    console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
+}
 
 // Login avec appstate
 let appstate;
