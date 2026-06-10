@@ -5,17 +5,7 @@ import config from "./config.js";
 
 const cmds = new Map();
 
-// Fonction async pour charger les commandes
-async function loadCmds() {
-    const cmdFiles = fs.readdirSync("./cmds").filter(file => file.endsWith(".js"));
-    for(const file of cmdFiles) {
-        const cmd = await import(`./cmds/${file}`);
-        cmds.set(cmd.default.name, cmd.default);
-        console.log(chalk.green(`Commande ${cmd.default.name} chargée`));
-    }
-    console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
-}
-
+// Une seule fonction loadCmds
 async function loadCmds() {
     const cmdFiles = fs.readdirSync("./cmds").filter(file => file.endsWith(".js"));
     for(const file of cmdFiles) {
@@ -34,6 +24,8 @@ async function loadCmds() {
     console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
 }
 
+await loadCmds();
+
 // Login avec appstate
 let appstate;
 if(fs.existsSync("appstate.json")) {
@@ -50,7 +42,6 @@ login({appState: appstate}, (err, api) => {
     api.setOptions(config.FCAOption);
     console.log(chalk.green(`✅ ${config.nomBot} connecté !`));
     
-    // ICI LE FIX : listenMqtt au lieu de listen
     api.listenMqtt(async (err, event) => {
         if(err) return;
         if(event.type !== "message" || !event.body) return;
