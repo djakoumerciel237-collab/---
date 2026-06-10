@@ -28,7 +28,46 @@ if(fs.existsSync("appstate.json")) {
 
 login({appState: appstate}, (err, api) => {
     //... reste du code
-login
+import login from "fca-unofficial";
+import fs from "fs";
+import path from "path";
+import chalk from "chalk";
+import config from "./config.js";
+
+const cmds = new Map();
+const cooldowns = new Map();
+
+// Auto-load toutes les cmds dans /cmds/
+const cmdFiles = fs.readdirSync("./cmds").filter(file => file.endsWith(".js"));
+for(const file of cmdFiles) {
+    const cmd = await import(`./cmds/${file}`);
+    cmds.set(cmd.default.name, cmd.default);
+    console.log(chalk.green(`[LOAD] Commande ${cmd.default.name} chargée`));
+}
+
+console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
+
+let appstate;
+if(fs.existsSync("appstate.json")) {
+    appstate = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
+} else if(process.env.APPSTATE) {
+    appstate = JSON.parse(process.env.APPSTATE);
+} else {
+    console.error("Aucun appstate trouvé! Mets APPSTATE dans Railway ou utilise !setcookie");
+    process.exit(1);
+}
+
+login({appState: appstate}, (err, api) => {
+    if(err) return console.error(chalk.red("Erreur login:", err));
+    
+    api.setOptions(config.FCAOption);
+    console.log(chalk.green(`✅ ${config.nomBot} connecté !`));
+
+    api.listen(async (err, event) => {
+        if(err) return;
+        // ... reste de ton code welcome, goodbye, etc
+    });
+});
     
     api.setOptions(config.FCAOption);
     console.log(chalk.green(`✅ ${config.nomBot} connecté !`));
