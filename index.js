@@ -5,60 +5,59 @@ import config from "./config.js";
 
 const cmds = new Map();
 
-// Une seule fonction loadCmds
+// Charge commandes comme GOAT-BOT
 async function loadCmds() {
-    const cmdFiles = fs.readdirSync("./cmds").filter(file => file.endsWith(".js"));
-    for(const file of cmdFiles) {
-        try {
-            const cmd = await import(`./cmds/${file}`);
-            if(cmd.default && cmd.default.name) {
-                cmds.set(cmd.default.name, cmd.default);
-                console.log(chalk.green(`Commande ${cmd.default.name} chargée`));
-            } else {
-                console.log(chalk.red(`Cmd ${file} invalide, ignorée`));
-            }
-        } catch(e) {
-            console.log(chalk.red(`Erreur chargement ${file}: ${e.message}`));
+    if(!fs.existsSync("./cmds")) fs.mkdirSync("./cmds");
+    const files = fs.readdirSync("./cmds").filter(f => f.endsWith(".js"));
+    for(const file of files) {
+        const cmd = await import(`./cmds/${file}`);
+        if(cmd.default?.name) {
+            cmds.set(cmd.default.name, cmd.default);
+            console.log(chalk.green(`[LOAD] ${cmd.default.name}`));
         }
     }
+}
+
+async function startBot() {
+    await loadCmds();
     console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
-}
 
-await loadCmds();
-
-// Login avec appstate
-let appstate;
-if(fs.existsSync("appstate.json")) {
-    appstate = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
-} else if(process.env.APPSTATE) {
-    appstate = JSON.parse(process.env.APPSTATE);
-} else {
-    console.error(chalk.red("Aucun appstate trouvé!"));
-    process.exit(1);
-}
-
-login({appState: appstate}, (err, api) => {
-    if(err) return console.error(chalk.red("Erreur login:", err));
-    api.setOptions(config.FCAOption);
-    console.log(chalk.green(`✅ ${config.nomBot} connecté !`));
+    let appstate = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
     
-    api.listenMqtt(async (err, event) => {
-        if(err) return;
-        if(event.type !== "message" || !event.body) return;
-        
-        const prefix = config.prefix;
-        if(!event.body.startsWith(prefix)) return;
-        
-        const args = event.body.slice(prefix.length).trim().split(/ +/);
-        const cmdName = args.shift().toLowerCase();
-        const command = cmds.get(cmdName);
-        if(!command) return;
-        
-        try {
-            await command.run(api, event, args, config);
-        } catch(e) {
-            console.error(e);
-            api.sendMessage("Erreur commande ❌", event.threadID);
+    login({appState: appstate}, (err, api) => {
+        if(err) {
+            console.error(chalk.red("Login failed:", err));
+            setTimeout(startBot, 10000); // auto restart comme GOAT-BOT
+            return;
         }
+        
+        api.setOptions(config.FCAOption);
+        console.log(chalk.green(`✅ ${config.nomBot} connecté ! ID: ${api.getCurrentUserID()}`));
+        
+        const listen = api.listenMqtt((err, event) => {
+            if(err) {
+                console.error(chalk.red("MQTT Error:", err));
+                listen.stopListening();
+                setTimeout(startBot, 5000); // auto relogin comme GOAT-BOT
+                return;
+            }
+            
+            if(event.type !== "message" || !event.body) return;
+            if(!event.body.startsWith(config.prefix)) return;
+            
+            const args = event.body.slice(config.prefix.length).trim().split(/ +/);
+            const cmdName = args.shift().toLowerCase();
+            const cmd = cmds.get(cmdName);
+            if(!cmd) return;
+            
+            // Check admin comme GOAT-BOT
+            if(config.adminOnly && !config.adminBot.includes(event.senderID)) {
+                return api.sendMessage("Admin only ❌", event.threadID);
+            }
+            
+            cmd.run(api, event, args, config);
+        });
     });
-});
+}
+
+startBot();
