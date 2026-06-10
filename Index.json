@@ -16,9 +16,19 @@ for(const file of cmdFiles) {
 }
 
 console.log(chalk.blue(`MUZAN-BOT chargé avec ${cmds.size} commandes`));
+let appstate;
+if(fs.existsSync("appstate.json")) {
+    appstate = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
+} else if(process.env.APPSTATE) {
+    appstate = JSON.parse(process.env.APPSTATE);
+} else {
+    console.error("Aucun appstate trouvé! Mets APPSTATE dans Railway ou utilise!setcookie");
+    process.exit(1);
+}
 
-login({appState: JSON.parse(process.env.APPSTATE)}, (err, api) => {
-    if(err) return console.error(chalk.red("Erreur login:", err));
+login({appState: appstate}, (err, api) => {
+    //... reste du code
+login
     
     api.setOptions(config.FCAOption);
     console.log(chalk.green(`✅ ${config.nomBot} connecté !`));
