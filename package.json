@@ -1,1 +1,48 @@
-"fca-unofficial": "github:ntkhang03/fca-unofficial"
+{
+  "name": "muzan-bot",
+  "version": "3.0.0",
+  "description": "Bot Messenger multi-fonctions stable - MUZAN V3",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "fca-unofficial": "github:ntkhang03/fca-unofficial",
+    "axios": "^1.7.5",
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.5",
+    "form-data": "^4.0.0",
+    "image-to-base64": "^2.2.0",
+    "jimp": "^0.22.10",
+    "moment-timezone": "^0.5.45",
+    "node-fetch": "^3.3.2",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.2.2",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.33.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "ffmpeg-static": "^5.2.0",
+    "node-gtts": "^2.0.2",
+    "qrcode": "^1.5.3",
+    "string-similarity": "^4.0.4",
+    "weather-js": "^2.0.0",
+    "ytdl-core": "^4.11.5",
+    "yt-search": "^2.10.4",
+    "music-metadata": "^7.14.0",
+    "canvas": "^2.11.2",
+    "google-tts-api": "^2.0.2",
+    "os": "^0.1.2",
+    "util": "^0.12.5",
+    "buffer": "^6.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
