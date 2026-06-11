@@ -9,7 +9,7 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-    "fca-unofficial": "github:ntkhang03/fca-unofficial",
+    "fca-unofficial": "git+https://github.com/ntkhang03/fca-unofficial.git"
     "axios": "^1.7.5",
     "chalk": "^5.3.0",
     "cheerio": "^1.0.0-rc.12",
